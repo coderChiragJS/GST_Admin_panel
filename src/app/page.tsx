@@ -1,65 +1,123 @@
-import Image from "next/image";
+import {
+  DollarSign,
+  Users,
+  FileText,
+  ArrowUpRight,
+  Search,
+  Filter,
+  MoreVertical,
+  Plus
+} from "lucide-react";
+import { DashboardCard } from "@/components/DashboardCard";
+import { cn } from "@/lib/utils";
+
+const recentTransactions = [
+  { id: "INV-001", client: "Acme Corp", amount: "₹45,200", status: "Paid", date: "Feb 2, 2026" },
+  { id: "INV-002", client: "Global Tech", amount: "₹1,12,000", status: "Pending", date: "Feb 1, 2026" },
+  { id: "INV-003", client: "Nexus Inc", amount: "₹12,400", status: "Paid", date: "Jan 30, 2026" },
+  { id: "INV-004", client: "Zenith Ltd", amount: "₹88,900", status: "Overdue", date: "Jan 28, 2026" },
+  { id: "INV-005", client: "Quantum Solutions", amount: "₹67,500", status: "Paid", date: "Jan 25, 2026" },
+];
 
 export default function Home() {
   return (
-    <div className="flex min-h-screen items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex min-h-screen w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
+    <div className="space-y-8 animate-in fade-in duration-700">
+      <header className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">Dashboard Overview</h1>
+          <p className="mt-1 text-muted-foreground">Welcome back! Here's what's happening today.</p>
+        </div>
+        <div className="flex items-center gap-3">
+          <button className="flex h-10 items-center justify-center rounded-xl border border-border bg-card px-4 text-sm font-medium shadow-sm transition-all hover:bg-accent">
+            <Filter className="mr-2 h-4 w-4" />
+            Filters
+          </button>
+          <button className="flex h-10 items-center justify-center rounded-xl bg-primary px-4 text-sm font-medium text-primary-foreground shadow-lg shadow-primary/20 transition-all hover:scale-[1.02] active:scale-[0.98]">
+            <Plus className="mr-2 h-4 w-4" />
+            New Invoice
+          </button>
+        </div>
+      </header>
+
+      <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+        <DashboardCard
+          title="Total Revenue"
+          value="₹12,45,200"
+          description="Total GST collected this quarter"
+          icon={DollarSign}
+          trend={{ value: "12.5%", isPositive: true }}
         />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
+        <DashboardCard
+          title="Active Clients"
+          value="148"
+          description="24 new clients added this month"
+          icon={Users}
+          trend={{ value: "8.2%", isPositive: true }}
+        />
+        <DashboardCard
+          title="Pending Invoices"
+          value="32"
+          description="Requires immediate attention"
+          icon={FileText}
+          trend={{ value: "4.1%", isPositive: false }}
+        />
+      </div>
+
+      <div className="glass overflow-hidden rounded-2xl border border-border">
+        <div className="flex items-center justify-between border-b border-border p-6">
+          <div className="flex items-center gap-4">
+            <h2 className="text-lg font-semibold">Recent Transactions</h2>
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+              <input
+                type="text"
+                placeholder="Search..."
+                className="h-9 w-64 rounded-xl border border-border bg-background/50 pl-9 pr-4 text-sm outline-none focus:ring-2 focus:ring-primary/20"
+              />
+            </div>
+          </div>
+          <button className="text-sm font-medium text-primary hover:underline">View All</button>
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
+        <div className="overflow-x-auto">
+          <table className="w-full text-left">
+            <thead>
+              <tr className="border-b border-border bg-muted/30 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                <th className="px-6 py-4">Transaction ID</th>
+                <th className="px-6 py-4">Client</th>
+                <th className="px-6 py-4">Amount</th>
+                <th className="px-6 py-4">Status</th>
+                <th className="px-6 py-4">Date</th>
+                <th className="px-6 py-4 text-right">Action</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-border">
+              {recentTransactions.map((tx) => (
+                <tr key={tx.id} className="group transition-colors hover:bg-muted/50">
+                  <td className="whitespace-nowrap px-6 py-4 text-sm font-medium">{tx.id}</td>
+                  <td className="whitespace-nowrap px-6 py-4 text-sm">{tx.client}</td>
+                  <td className="whitespace-nowrap px-6 py-4 text-sm font-semibold">{tx.amount}</td>
+                  <td className="whitespace-nowrap px-6 py-4 text-sm">
+                    <span className={cn(
+                      "inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium",
+                      tx.status === "Paid" ? "bg-emerald-500/10 text-emerald-500" :
+                        tx.status === "Pending" ? "bg-amber-500/10 text-amber-500" :
+                          "bg-rose-500/10 text-rose-500"
+                    )}>
+                      {tx.status}
+                    </span>
+                  </td>
+                  <td className="whitespace-nowrap px-6 py-4 text-sm text-muted-foreground">{tx.date}</td>
+                  <td className="whitespace-nowrap px-6 py-4 text-right">
+                    <button className="rounded-lg p-1 text-muted-foreground transition-colors hover:bg-border">
+                      <MoreVertical className="h-4 w-4" />
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
-      </main>
+      </div>
     </div>
   );
 }
