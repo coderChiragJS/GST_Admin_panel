@@ -1,5 +1,5 @@
 import {
-  DollarSign,
+  IndianRupee,
   Users,
   FileText,
   ArrowUpRight,
@@ -44,7 +44,7 @@ export default function Home() {
           title="Total Revenue"
           value="₹12,45,200"
           description="Total GST collected this quarter"
-          icon={DollarSign}
+          icon={IndianRupee}
           trend={{ value: "12.5%", isPositive: true }}
         />
         <DashboardCard
