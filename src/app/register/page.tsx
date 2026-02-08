@@ -24,7 +24,7 @@ export default function RegisterPage() {
         if (register.fulfilled.match(result)) {
             setSuccess(true);
             setTimeout(() => {
-                router.push("/");
+                router.push("/login");
             }, 1500);
         }
     };
@@ -47,7 +47,7 @@ export default function RegisterPage() {
                                 <CheckCircle2 className="h-10 w-10" />
                             </div>
                             <h3 className="text-xl font-bold italic">Account Created!</h3>
-                            <p className="mt-2 text-sm text-muted-foreground italic">Steering you to the dashboard...</p>
+                            <p className="mt-2 text-sm text-muted-foreground italic">Redirecting to sign in...</p>
                         </div>
                     ) : (
                         <form className="space-y-6" onSubmit={handleSubmit}>

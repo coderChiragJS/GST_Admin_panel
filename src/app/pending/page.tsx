@@ -26,7 +26,6 @@ import { cn } from "@/lib/utils";
 export default function PendingApprovalsPage() {
     const dispatch = useDispatch<AppDispatch>();
     const { pendingApprovals, loading, error } = useSelector((state: RootState) => state.admin);
-    const [trialDaysMap, setTrialDaysMap] = useState<Record<string, number>>({});
     const [selectedItem, setSelectedItem] = useState<{ user: any, business: any } | null>(null);
 
     useEffect(() => {
@@ -35,7 +34,17 @@ export default function PendingApprovalsPage() {
 
     const handleApprove = async (e: React.MouseEvent, userId: string, businessId: string) => {
         e.stopPropagation(); // Prevent modal from opening
-        await dispatch(approveBusiness({ userId, businessId }));
+        
+        // Validate that both IDs are present
+        if (!userId || !businessId) {
+            console.error('User ID and Business ID are required');
+            return;
+        }
+        
+        await dispatch(approveBusiness({ 
+            userId, 
+            businessId
+        }));
     };
 
     if (loading && pendingApprovals.length === 0) {
@@ -100,7 +109,7 @@ export default function PendingApprovalsPage() {
                                         <Building2 className="h-5 w-5" />
                                     </div>
                                     <div>
-                                        <h5 className="font-bold text-base italic line-clamp-1">{item.business.firmName}</h5>
+                                        <h5 className="font-bold text-base italic line-clamp-1">{item.business.businessName ?? item.business.firmName ?? "—"}</h5>
                                         <p className="text-xs text-muted-foreground font-mono uppercase italic tracking-wider">{item.business.gstNumber}</p>
                                     </div>
                                 </div>
@@ -114,7 +123,7 @@ export default function PendingApprovalsPage() {
                             <div className="space-y-3 mb-6">
                                 <div className="flex items-center gap-2 text-sm italic font-medium text-muted-foreground">
                                     <User className="h-3.5 w-3.5 text-primary" />
-                                    <span className="line-clamp-1">{item.user.name}</span>
+                                    <span className="line-clamp-1">{item.user?.name || 'N/A'}</span>
                                 </div>
                                 <div className="grid grid-cols-1 gap-y-2 text-xs italic font-medium">
                                     <div className="flex items-center gap-2 text-muted-foreground">
@@ -129,14 +138,16 @@ export default function PendingApprovalsPage() {
                             </div>
 
                             <div className="pt-4 border-t border-border/50">
-                                <div className="flex items-center justify-between">
-                                    <div className="flex items-center gap-1 text-[10px] text-muted-foreground italic font-medium">
-                                        <Clock className="h-3 w-3" />
-                                        {new Date(item.business.createdAt).toLocaleDateString()}
+                                <div className="flex flex-col gap-3">
+                                    <div className="flex items-center justify-between">
+                                        <div className="flex items-center gap-1 text-[10px] text-muted-foreground italic font-medium">
+                                            <Clock className="h-3 w-3" />
+                                            {new Date(item.business.createdAt).toLocaleDateString()}
+                                        </div>
                                     </div>
                                     <button
-                                        disabled={loading}
-                                        onClick={(e) => handleApprove(e, item.user.userId, item.business.businessId)}
+                                        disabled={loading || !(item.user?.userId || item.business?.userId) || !item.business?.businessId}
+                                        onClick={(e) => handleApprove(e, item.user?.userId || item.business?.userId || '', item.business?.businessId || '')}
                                         className="rounded-xl bg-primary px-4 py-2 text-xs font-bold text-primary-foreground shadow-lg shadow-primary/20 transition-all hover:scale-105 active:scale-95 disabled:opacity-50 italic flex items-center gap-2"
                                     >
                                         {loading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : "Approve"}
@@ -170,7 +181,7 @@ export default function PendingApprovalsPage() {
                                     <Building2 className="h-6 w-6" />
                                 </div>
                                 <div>
-                                    <h2 className="text-xl font-bold italic">{selectedItem.business.firmName}</h2>
+                                    <h2 className="text-xl font-bold italic">{selectedItem.business.businessName ?? selectedItem.business.firmName ?? "—"}</h2>
                                     <p className="text-sm text-muted-foreground italic font-medium font-mono tracking-tight">{selectedItem.business.gstNumber}</p>
                                 </div>
                             </div>

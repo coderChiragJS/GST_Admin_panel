@@ -33,22 +33,21 @@ export const login = createAsyncThunk(
             }
             return response.data;
         } catch (error: any) {
-            return rejectWithValue(error.response?.data?.message || "Login failed");
+            const msg = error.response?.data?.error ?? error.response?.data?.message ?? "Login failed";
+            return rejectWithValue(msg);
         }
     }
 );
 
 export const register = createAsyncThunk(
     "auth/register",
-    async (userData: any, { rejectWithValue }) => {
+    async (userData: { name: string; email: string; password: string }, { rejectWithValue }) => {
         try {
             const response = await api.post("/admin/auth/register", userData);
-            if (response.data.token) {
-                localStorage.setItem("token", response.data.token);
-            }
-            return response.data;
+            return response.data as { message: string; userId: string };
         } catch (error: any) {
-            return rejectWithValue(error.response?.data?.message || "Registration failed");
+            const msg = error.response?.data?.error ?? error.response?.data?.message ?? "Registration failed";
+            return rejectWithValue(msg);
         }
     }
 );
@@ -89,11 +88,9 @@ const authSlice = createSlice({
                 state.loading = true;
                 state.error = null;
             })
-            .addCase(register.fulfilled, (state, action) => {
+            .addCase(register.fulfilled, (state) => {
                 state.loading = false;
-                state.isAuthenticated = true;
-                state.user = action.payload.user;
-                state.token = action.payload.token;
+                // Register returns 201 with message + userId only; no token. User must log in.
             })
             .addCase(register.rejected, (state, action) => {
                 state.loading = false;

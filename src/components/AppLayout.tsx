@@ -17,27 +17,27 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
     }, []);
 
     const isAuthPage = pathname === "/login" || pathname === "/register";
+    const isForbiddenPage = pathname === "/forbidden";
+    const isPublicPage = isAuthPage || isForbiddenPage;
 
     useEffect(() => {
         if (!mounted) return;
 
-        if (!token && !isAuthPage) {
+        if (!token && !isPublicPage) {
             router.replace("/login");
         }
 
         if (token && isAuthPage) {
             router.replace("/");
         }
-    }, [token, isAuthPage, router, mounted]);
+    }, [token, isAuthPage, isPublicPage, router, mounted]);
 
-    // Prevent hydration mismatch and flash of protected content
     if (!mounted) return null;
 
-    // While checking auth, show nothing or a loader to avoid flashing protected content
-    if (!token && !isAuthPage) return null;
+    if (!token && !isPublicPage) return null;
     if (token && isAuthPage) return null;
 
-    if (isAuthPage) {
+    if (isPublicPage) {
         return <div className="min-h-screen bg-background">{children}</div>;
     }
 

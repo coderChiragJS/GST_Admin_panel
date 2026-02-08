@@ -4,13 +4,12 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
     LayoutDashboard,
-    FileText,
-    Users,
     Settings,
     LogOut,
-    HelpCircle,
     TrendingUp,
-    Clock
+    Clock,
+    Package,
+    UserX,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useDispatch } from "react-redux";
@@ -20,13 +19,11 @@ import { AppDispatch } from "@/store/store";
 const menuItems = [
     { icon: LayoutDashboard, label: "Dashboard", href: "/" },
     { icon: Clock, label: "Pending Approvals", href: "/pending" },
-    { icon: FileText, label: "Invoices", href: "/invoices" },
-    { icon: Users, label: "Clients", href: "/clients" },
-    { icon: TrendingUp, label: "Reports", href: "/reports" },
+    { icon: Package, label: "Packages", href: "/packages" },
+    { icon: UserX, label: "Expired Trials", href: "/expired-trials" },
 ];
 
 const secondaryItems = [
-    { icon: HelpCircle, label: "Help Center", href: "/help" },
     { icon: Settings, label: "Settings", href: "/settings" },
 ];
 
