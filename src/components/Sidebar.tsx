@@ -10,6 +10,8 @@ import {
     Clock,
     Package,
     UserX,
+    CreditCard,
+    Users,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useDispatch } from "react-redux";
@@ -18,9 +20,11 @@ import { AppDispatch } from "@/store/store";
 
 const menuItems = [
     { icon: LayoutDashboard, label: "Dashboard", href: "/" },
+    { icon: Users, label: "Users", href: "/users" },
     { icon: Clock, label: "Pending Approvals", href: "/pending" },
     { icon: Package, label: "Packages", href: "/packages" },
     { icon: UserX, label: "Expired Trials", href: "/expired-trials" },
+    { icon: CreditCard, label: "Payment details", href: "/payments" },
 ];
 
 const secondaryItems = [

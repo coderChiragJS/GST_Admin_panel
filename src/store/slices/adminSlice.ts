@@ -59,16 +59,124 @@ export interface ExpiredTrialUser {
     createdAt: string;
 }
 
+export interface AdminUserSummary {
+    userId: string;
+    name: string;
+    email: string;
+    createdAt: string;
+    approvalStatus?: string;
+}
+
+export interface AdminUserBusinessSummary {
+    businessId: string;
+    businessName: string;
+    gstNumber: string;
+    approvalStatus: string;
+    isActive?: boolean;
+    createdAt: string;
+    updatedAt: string;
+}
+
+export interface AdminUserSubscriptionSummary {
+    subscriptionId: string;
+    packageId: string;
+    packageName: string;
+    invoiceLimit: number;
+    quotationLimit: number;
+    invoicesUsed: number;
+    quotationsUsed: number;
+    remainingInvoices: number;
+    remainingQuotations: number;
+    startDate: string;
+    endDate: string;
+    isActive: boolean;
+}
+
+export interface AdminUserWithSubscription {
+    user: AdminUserSummary;
+    businesses: AdminUserBusinessSummary[];
+    subscription: AdminUserSubscriptionSummary | null;
+}
+
+export interface AdminUser {
+    userId: string;
+    name: string;
+    email: string;
+    role: string;
+    approvalStatus: string;
+    subscriptionActive: boolean;
+    trialStartDate: string;
+    trialEndDate: string;
+    createdAt: string;
+    businesses: {
+        userId: string;
+        businessId: string;
+        firmName: string;
+        gstNumber: string;
+        approvalStatus: string;
+        isActive: boolean;
+    }[];
+    subscription: {
+        subscriptionId: string;
+        packageId: string;
+        packageName: string;
+        invoiceLimit: number;
+        quotationLimit: number;
+        invoicesUsed: number;
+        quotationsUsed: number;
+        startDate: string;
+    } | null;
+    hasPurchasedPackage: boolean;
+    remainingInvoices: number;
+    remainingQuotations: number;
+}
+
+export interface Payment {
+    PK?: string;
+    SK?: string;
+    orderId: string;
+    merchantOrderId?: string;
+    userId: string;
+    packageId: string;
+    amount?: number;
+    amountPaise?: number;
+    currency?: string;
+    status: string;
+    transactionId?: string;
+    phonePeOrderId?: string;
+    gatewayRef?: string;
+    failureReason?: string | null;
+    packageSnapshot?: {
+        packageId?: string;
+        name?: string;
+        price?: number;
+        invoiceLimit?: number;
+        quotationLimit?: number;
+        validityDays?: number | null;
+    };
+    createdAt: string;
+    updatedAt: string;
+}
+
 interface AdminState {
     pendingApprovals: PendingItem[];
     trialDays: number | null;
     packages: Package[];
     expiredTrialUsers: ExpiredTrialUser[];
     expiredTrialNextToken: string | null;
+    usersWithSubscriptions: AdminUserWithSubscription[];
+    usersWithSubscriptionsNextToken: string | null;
+    users: AdminUser[];
+    usersNextToken: string | null;
+    payments: Payment[];
+    paymentsNextToken: string | null;
     loading: boolean;
     settingsLoading: boolean;
     packagesLoading: boolean;
     expiredLoading: boolean;
+    usersWithSubscriptionsLoading: boolean;
+    usersLoading: boolean;
+    paymentsLoading: boolean;
     error: string | null;
 }
 
@@ -78,10 +186,19 @@ const initialState: AdminState = {
     packages: [],
     expiredTrialUsers: [],
     expiredTrialNextToken: null,
+    usersWithSubscriptions: [],
+    usersWithSubscriptionsNextToken: null,
+    users: [],
+    usersNextToken: null,
+    payments: [],
+    paymentsNextToken: null,
     loading: false,
     settingsLoading: false,
     packagesLoading: false,
     expiredLoading: false,
+    usersWithSubscriptionsLoading: false,
+    usersLoading: false,
+    paymentsLoading: false,
     error: null,
 };
 
@@ -174,6 +291,19 @@ export const updatePackage = createAsyncThunk(
     }
 );
 
+export const deletePackage = createAsyncThunk(
+    "admin/deletePackage",
+    async (packageId: string, { rejectWithValue, dispatch }) => {
+        try {
+            await api.delete(`/admin/packages/${packageId}`);
+            await dispatch(fetchPackages());
+            return packageId;
+        } catch (error: any) {
+            return rejectWithValue(error.response?.data?.error ?? error.response?.data?.message ?? "Failed to delete package");
+        }
+    }
+);
+
 export const fetchExpiredTrialUsers = createAsyncThunk(
     "admin/fetchExpiredTrial",
     async (
@@ -192,6 +322,98 @@ export const fetchExpiredTrialUsers = createAsyncThunk(
             };
         } catch (error: any) {
             return rejectWithValue(error.response?.data?.error ?? error.response?.data?.message ?? "Failed to fetch expired trial users");
+        }
+    }
+);
+
+export const fetchUsersWithSubscriptions = createAsyncThunk(
+    "admin/fetchUsersWithSubscriptions",
+    async (
+        { limit = 50, nextToken }: { limit?: number; nextToken?: string | null } = {},
+        { rejectWithValue }
+    ) => {
+        try {
+            const params = new URLSearchParams();
+            if (limit) params.set("limit", String(limit));
+            if (nextToken) params.set("nextToken", nextToken);
+            const response = await api.get(`/admin/users/subscriptions?${params.toString()}`);
+            return {
+                items: (response.data.items ?? []) as AdminUserWithSubscription[],
+                nextToken: response.data.nextToken ?? null,
+                append: !!nextToken,
+            };
+        } catch (error: any) {
+            return rejectWithValue(
+                error.response?.data?.error ??
+                    error.response?.data?.message ??
+                    "Failed to fetch users with subscriptions"
+            );
+        }
+    }
+);
+
+export const fetchUsers = createAsyncThunk(
+    "admin/fetchUsers",
+    async (
+        { limit = 50, nextToken }: { limit?: number; nextToken?: string | null } = {},
+        { rejectWithValue }
+    ) => {
+        try {
+            const params = new URLSearchParams();
+            if (limit) params.set("limit", String(limit));
+            if (nextToken) params.set("nextToken", nextToken);
+            const response = await api.get(`/admin/users?${params.toString()}`);
+            return {
+                users: (response.data.users ?? []) as AdminUser[],
+                nextToken: response.data.nextToken ?? null,
+                append: !!nextToken,
+            };
+        } catch (error: any) {
+            return rejectWithValue(
+                error.response?.data?.error ??
+                    error.response?.data?.message ??
+                    "Failed to fetch users"
+            );
+        }
+    }
+);
+
+export const fetchPayments = createAsyncThunk(
+    "admin/fetchPayments",
+    async (
+        { limit = 50, nextToken }: { limit?: number; nextToken?: string | null } = {},
+        { rejectWithValue }
+    ) => {
+        try {
+            const params = new URLSearchParams();
+            if (limit) params.set("limit", String(limit));
+            if (nextToken) params.set("nextToken", nextToken);
+            const response = await api.get(`/admin/payments?${params.toString()}`);
+            return {
+                payments: (response.data.payments ?? []) as Payment[],
+                nextToken: response.data.nextToken ?? null,
+                append: !!nextToken,
+            };
+        } catch (error: any) {
+            return rejectWithValue(error.response?.data?.error ?? error.response?.data?.message ?? "Failed to fetch payments");
+        }
+    }
+);
+
+export const approveUser = createAsyncThunk(
+    "admin/approveUser",
+    async (
+        { userId, trialDays }: { userId: string; trialDays?: number },
+        { rejectWithValue, dispatch }
+    ) => {
+        try {
+            const body: { userId: string; trialDays?: number } = { userId };
+            if (trialDays != null) body.trialDays = trialDays;
+            const response = await api.post("/admin/approve", body);
+            dispatch(fetchPendingApprovals());
+            return response.data;
+        } catch (error: any) {
+            return rejectWithValue(error.response?.data?.error ?? error.response?.data?.message ?? "Failed to approve user");
         }
     }
 );
@@ -225,6 +447,18 @@ const adminSlice = createSlice({
         clearExpiredTrialList: (state) => {
             state.expiredTrialUsers = [];
             state.expiredTrialNextToken = null;
+        },
+        clearUsersWithSubscriptions: (state) => {
+            state.usersWithSubscriptions = [];
+            state.usersWithSubscriptionsNextToken = null;
+        },
+        clearUsers: (state) => {
+            state.users = [];
+            state.usersNextToken = null;
+        },
+        clearPaymentsList: (state) => {
+            state.payments = [];
+            state.paymentsNextToken = null;
         },
     },
     extraReducers: (builder) => {
@@ -298,6 +532,47 @@ const adminSlice = createSlice({
                 state.expiredLoading = false;
                 state.error = action.payload as string;
             })
+            .addCase(fetchUsersWithSubscriptions.pending, (state) => {
+                state.usersWithSubscriptionsLoading = true;
+                state.error = null;
+            })
+            .addCase(fetchUsersWithSubscriptions.fulfilled, (state, action) => {
+                state.usersWithSubscriptionsLoading = false;
+                state.usersWithSubscriptions = action.payload.append
+                    ? [...state.usersWithSubscriptions, ...action.payload.items]
+                    : action.payload.items;
+                state.usersWithSubscriptionsNextToken = action.payload.nextToken;
+            })
+            .addCase(fetchUsersWithSubscriptions.rejected, (state, action) => {
+                state.usersWithSubscriptionsLoading = false;
+                state.error = action.payload as string;
+            })
+            .addCase(fetchUsers.pending, (state) => {
+                state.usersLoading = true;
+                state.error = null;
+            })
+            .addCase(fetchUsers.fulfilled, (state, action) => {
+                state.usersLoading = false;
+                state.users = action.payload.append
+                    ? [...state.users, ...action.payload.users]
+                    : action.payload.users;
+                state.usersNextToken = action.payload.nextToken;
+            })
+            .addCase(fetchUsers.rejected, (state, action) => {
+                state.usersLoading = false;
+                state.error = action.payload as string;
+            })
+            .addCase(approveUser.pending, (state) => {
+                state.loading = true;
+                state.error = null;
+            })
+            .addCase(approveUser.fulfilled, (state) => {
+                state.loading = false;
+            })
+            .addCase(approveUser.rejected, (state, action) => {
+                state.loading = false;
+                state.error = action.payload as string;
+            })
             .addCase(approveBusiness.pending, (state) => {
                 state.loading = true;
                 state.error = null;
@@ -308,9 +583,25 @@ const adminSlice = createSlice({
             .addCase(approveBusiness.rejected, (state, action) => {
                 state.loading = false;
                 state.error = action.payload as string;
+            })
+            .addCase(fetchPayments.pending, (state) => {
+                state.paymentsLoading = true;
+                state.error = null;
+            })
+            .addCase(fetchPayments.fulfilled, (state, action) => {
+                state.paymentsLoading = false;
+                state.payments = action.payload.append
+                    ? [...state.payments, ...action.payload.payments]
+                    : action.payload.payments;
+                state.paymentsNextToken = action.payload.nextToken;
+            })
+            .addCase(fetchPayments.rejected, (state, action) => {
+                state.paymentsLoading = false;
+                state.error = action.payload as string;
             });
     },
 });
 
-export const { clearExpiredTrialList } = adminSlice.actions;
+export const { clearExpiredTrialList, clearUsersWithSubscriptions, clearUsers, clearPaymentsList } =
+    adminSlice.actions;
 export default adminSlice.reducer;

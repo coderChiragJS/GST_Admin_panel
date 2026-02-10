@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { fetchPendingApprovals, approveBusiness } from "@/store/slices/adminSlice";
+import { fetchPendingApprovals, approveBusiness, approveUser } from "@/store/slices/adminSlice";
 import { AppDispatch, RootState } from "@/store/store";
 import {
     User,
@@ -13,38 +13,42 @@ import {
     Calendar,
     BadgeCheck,
     Clock,
-    ChevronRight,
     Loader2,
     AlertCircle,
-    Zap,
     X,
     Fingerprint,
-    Info
+    Info,
+    UserCheck,
+    Building
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export default function PendingApprovalsPage() {
     const dispatch = useDispatch<AppDispatch>();
     const { pendingApprovals, loading, error } = useSelector((state: RootState) => state.admin);
-    const [selectedItem, setSelectedItem] = useState<{ user: any, business: any } | null>(null);
+        const [selectedItem, setSelectedItem] = useState<{ user: any; business: any } | null>(null);
+    const [trialDaysInput, setTrialDaysInput] = useState<string>("");
 
     useEffect(() => {
         dispatch(fetchPendingApprovals());
     }, [dispatch]);
 
-    const handleApprove = async (e: React.MouseEvent, userId: string, businessId: string) => {
-        e.stopPropagation(); // Prevent modal from opening
-        
-        // Validate that both IDs are present
-        if (!userId || !businessId) {
-            console.error('User ID and Business ID are required');
-            return;
-        }
-        
-        await dispatch(approveBusiness({ 
-            userId, 
-            businessId
-        }));
+    useEffect(() => {
+        if (selectedItem) setTrialDaysInput("");
+    }, [selectedItem]);
+
+    const handleApproveBusiness = async (e: React.MouseEvent, userId: string, businessId: string) => {
+        e.stopPropagation();
+        if (!userId || !businessId) return;
+        await dispatch(approveBusiness({ userId, businessId }));
+    };
+
+    const handleApproveUser = async (e: React.MouseEvent, userId: string) => {
+        e.stopPropagation();
+        if (!userId) return;
+        const trialDays = trialDaysInput.trim() ? parseInt(trialDaysInput, 10) : undefined;
+        if (trialDaysInput.trim() && (Number.isNaN(trialDays) || (trialDays as number) < 0)) return;
+        await dispatch(approveUser({ userId, trialDays }));
     };
 
     if (loading && pendingApprovals.length === 0) {
@@ -147,7 +151,7 @@ export default function PendingApprovalsPage() {
                                     </div>
                                     <button
                                         disabled={loading || !(item.user?.userId || item.business?.userId) || !item.business?.businessId}
-                                        onClick={(e) => handleApprove(e, item.user?.userId || item.business?.userId || '', item.business?.businessId || '')}
+                                        onClick={(e) => handleApproveBusiness(e, item.user?.userId ?? item.business?.userId ?? "", item.business?.businessId ?? "")}
                                         className="rounded-xl bg-primary px-4 py-2 text-xs font-bold text-primary-foreground shadow-lg shadow-primary/20 transition-all hover:scale-105 active:scale-95 disabled:opacity-50 italic flex items-center gap-2"
                                     >
                                         {loading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : "Approve"}
@@ -250,6 +254,44 @@ export default function PendingApprovalsPage() {
                                     </section>
                                 )}
                             </div>
+
+                            {/* Actions: Approve user (with trial days) + Approve business */}
+                            <section className="space-y-4 pt-6 border-t border-border">
+                                <h3 className="text-xs font-bold uppercase tracking-[0.2em] text-primary flex items-center gap-2 italic">
+                                    Actions
+                                </h3>
+                                <div className="flex flex-col sm:flex-row gap-4 flex-wrap">
+                                    <div className="flex flex-col gap-2 sm:flex-row sm:items-end">
+                                        <div>
+                                            <label className="block text-xs font-medium text-muted-foreground mb-1 italic">Trial days (optional)</label>
+                                            <input
+                                                type="number"
+                                                min={0}
+                                                placeholder="e.g. 14"
+                                                value={trialDaysInput}
+                                                onChange={(e) => setTrialDaysInput(e.target.value)}
+                                                className="h-10 w-28 rounded-xl border border-input bg-background px-3 text-sm"
+                                            />
+                                        </div>
+                                        <button
+                                            disabled={loading}
+                                            onClick={(e) => handleApproveUser(e, selectedItem.user?.userId ?? "")}
+                                            className="flex items-center gap-2 rounded-xl bg-primary/90 px-4 py-2 text-sm font-semibold text-primary-foreground hover:bg-primary disabled:opacity-50 italic"
+                                        >
+                                            {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <UserCheck className="h-4 w-4" />}
+                                            Approve user
+                                        </button>
+                                    </div>
+                                    <button
+                                        disabled={loading}
+                                        onClick={(e) => handleApproveBusiness(e, selectedItem.user?.userId ?? "", selectedItem.business?.businessId ?? "")}
+                                        className="flex items-center gap-2 rounded-xl border-2 border-primary bg-primary/10 px-4 py-2 text-sm font-semibold text-primary hover:bg-primary/20 disabled:opacity-50 italic"
+                                    >
+                                        {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Building className="h-4 w-4" />}
+                                        Approve business
+                                    </button>
+                                </div>
+                            </section>
                         </div>
                     </div>
                 </div>

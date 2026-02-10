@@ -6,6 +6,7 @@ import {
     fetchPackages,
     createPackage,
     updatePackage,
+    deletePackage,
     type Package,
 } from "@/store/slices/adminSlice";
 import { AppDispatch, RootState } from "@/store/store";
@@ -21,6 +22,7 @@ import {
     Calendar,
     ToggleLeft,
     ToggleRight,
+    Trash2,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -111,6 +113,12 @@ export default function PackagesPage() {
                 isActive: !pkg.isActive,
             })
         );
+    };
+
+    const handleDelete = async (e: React.MouseEvent, pkg: Package) => {
+        e.stopPropagation();
+        if (!confirm(`Delete "${pkg.name}"? This action cannot be undone.`)) return;
+        await dispatch(deletePackage(pkg.packageId));
     };
 
     return (
@@ -205,6 +213,13 @@ export default function PackagesPage() {
                                 >
                                     <Pencil className="h-3.5 w-3.5" />
                                     Edit
+                                </button>
+                                <button
+                                    onClick={(e) => handleDelete(e, pkg)}
+                                    className="flex items-center gap-1.5 rounded-xl border border-destructive/20 bg-destructive/5 px-3 py-2 text-xs font-medium text-destructive hover:bg-destructive/10"
+                                >
+                                    <Trash2 className="h-3.5 w-3.5" />
+                                    Delete
                                 </button>
                             </div>
                         </div>

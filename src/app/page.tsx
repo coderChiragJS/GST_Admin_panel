@@ -15,6 +15,8 @@ import {
     Settings,
     ArrowUpRight,
     Loader2,
+    CreditCard,
+    Users,
 } from "lucide-react";
 import { DashboardCard } from "@/components/DashboardCard";
 
@@ -45,6 +47,15 @@ export default function Home() {
             </header>
 
             <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+                <Link href="/users">
+                    <DashboardCard
+                        title="Users"
+                        value="View"
+                        description="Users, businesses & subscriptions"
+                        icon={Users}
+                        className="transition-all hover:shadow-lg hover:border-primary/20 cursor-pointer"
+                    />
+                </Link>
                 <Link href="/pending">
                     <DashboardCard
                         title="Pending approvals"
@@ -60,6 +71,15 @@ export default function Home() {
                         value={loadingStats ? "—" : String(expiredTrialUsers.length)}
                         description="Users with trial ended"
                         icon={UserX}
+                        className="transition-all hover:shadow-lg hover:border-primary/20 cursor-pointer"
+                    />
+                </Link>
+                <Link href="/payments">
+                    <DashboardCard
+                        title="Payment details"
+                        value="View"
+                        description="All orders (pending, completed, failed)"
+                        icon={CreditCard}
                         className="transition-all hover:shadow-lg hover:border-primary/20 cursor-pointer"
                     />
                 </Link>
@@ -105,6 +125,13 @@ export default function Home() {
                     >
                         <UserX className="h-4 w-4" />
                         Expired trials
+                    </Link>
+                    <Link
+                        href="/payments"
+                        className="inline-flex items-center gap-2 rounded-xl border border-border bg-background px-4 py-2 text-sm font-medium hover:bg-muted"
+                    >
+                        <CreditCard className="h-4 w-4" />
+                        Payment details
                     </Link>
                     <Link
                         href="/settings"
