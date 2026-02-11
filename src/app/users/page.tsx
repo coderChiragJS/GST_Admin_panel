@@ -47,6 +47,8 @@ export default function UsersPage() {
         }
 
         const s = user.subscription;
+        const subsByBusiness = user.subscriptionsByBusiness ?? [];
+
         return (
             <div className="space-y-1 text-xs">
                 <div className="font-semibold">{s.packageName}</div>
@@ -56,6 +58,51 @@ export default function UsersPage() {
                 <div className="text-muted-foreground">
                     Remaining: {user.remainingInvoices} inv / {user.remainingQuotations} quotes
                 </div>
+                {subsByBusiness.length > 0 && (
+                    <div className="mt-1 space-y-0.5">
+                        {subsByBusiness.slice(0, 2).map((sub) => {
+                            const business = user.businesses.find(
+                                (b) =>
+                                    (sub.businessId && b.businessId === sub.businessId) ||
+                                    (sub.gstNumber && b.gstNumber === sub.gstNumber)
+                            );
+
+                            const businessLabel = business
+                                ? `${business.firmName || "—"}${business.gstNumber ? ` (${business.gstNumber})` : ""}`
+                                : sub.gstNumber
+                                ? `GST: ${sub.gstNumber}`
+                                : sub.businessId
+                                ? `Business ID: ${sub.businessId}`
+                                : "Unknown business";
+
+                            const remainingInvoicesForBusiness = Math.max(
+                                (sub.invoiceLimit ?? 0) - (sub.invoicesUsed ?? 0),
+                                0
+                            );
+                            const remainingQuotationsForBusiness = Math.max(
+                                (sub.quotationLimit ?? 0) - (sub.quotationsUsed ?? 0),
+                                0
+                            );
+
+                            return (
+                                <div
+                                    key={sub.subscriptionId}
+                                    className="flex items-center justify-between gap-2 text-[11px] text-muted-foreground"
+                                >
+                                    <span className="truncate max-w-[180px]">{businessLabel}</span>
+                                    <span className="whitespace-nowrap">
+                                        {remainingInvoicesForBusiness} inv / {remainingQuotationsForBusiness} quotes
+                                    </span>
+                                </div>
+                            );
+                        })}
+                        {subsByBusiness.length > 2 && (
+                            <div className="text-[10px] text-muted-foreground">
+                                +{subsByBusiness.length - 2} more businesses
+                            </div>
+                        )}
+                    </div>
+                )}
             </div>
         );
     };

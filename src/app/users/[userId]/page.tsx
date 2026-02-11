@@ -93,6 +93,7 @@ export default function UserDetailPage() {
         subscription,
         remainingInvoices,
         remainingQuotations,
+        subscriptionsByBusiness,
     } = user;
 
     return (
@@ -333,6 +334,110 @@ export default function UserDetailPage() {
                                 </div>
                             </div>
                         </div>
+                    </div>
+                )}
+            </div>
+
+            {/* Subscriptions by Business */}
+            <div className="glass rounded-3xl border border-border p-6">
+                <h2 className="text-lg font-semibold mb-4 italic flex items-center gap-2">
+                    <Building2 className="h-5 w-5 text-primary" />
+                    Subscriptions by Business
+                </h2>
+                {!subscriptionsByBusiness || subscriptionsByBusiness.length === 0 ? (
+                    <p className="text-sm text-muted-foreground italic py-4">
+                        No active package for any business.
+                    </p>
+                ) : (
+                    <div className="grid gap-4 md:grid-cols-2">
+                        {subscriptionsByBusiness.map((sub) => {
+                            const business = businesses.find(
+                                (b) =>
+                                    (sub.businessId && b.businessId === sub.businessId) ||
+                                    (sub.gstNumber && b.gstNumber === sub.gstNumber)
+                            );
+
+                            const businessLabel = business
+                                ? `${business.firmName || "—"}${business.gstNumber ? ` (${business.gstNumber})` : ""}`
+                                : sub.gstNumber
+                                ? `GST: ${sub.gstNumber}`
+                                : sub.businessId
+                                ? `Business ID: ${sub.businessId}`
+                                : "Unknown business";
+
+                            const remainingInvoicesForBusiness = Math.max(
+                                (sub.invoiceLimit ?? 0) - (sub.invoicesUsed ?? 0),
+                                0
+                            );
+                            const remainingQuotationsForBusiness = Math.max(
+                                (sub.quotationLimit ?? 0) - (sub.quotationsUsed ?? 0),
+                                0
+                            );
+
+                            return (
+                                <div
+                                    key={sub.subscriptionId}
+                                    className="rounded-2xl border border-border/60 bg-background/60 p-4 space-y-3"
+                                >
+                                    <div className="flex items-start justify-between gap-2">
+                                        <div className="flex items-start gap-2">
+                                            <Building2 className="h-4 w-4 text-primary mt-0.5" />
+                                            <div>
+                                                <div className="font-semibold text-sm">{businessLabel}</div>
+                                                <div className="text-xs text-muted-foreground mt-0.5">
+                                                    Package: <span className="font-medium">{sub.packageName}</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div className="grid grid-cols-2 gap-3 text-xs">
+                                        <div className="space-y-1">
+                                            <div className="flex items-center gap-1 text-muted-foreground">
+                                                <FileText className="h-3.5 w-3.5" />
+                                                <span className="font-semibold">Invoices</span>
+                                            </div>
+                                            <div className="flex justify-between">
+                                                <span className="text-muted-foreground">Limit:</span>
+                                                <span className="font-medium">{sub.invoiceLimit}</span>
+                                            </div>
+                                            <div className="flex justify-between">
+                                                <span className="text-muted-foreground">Used:</span>
+                                                <span className="font-medium">{sub.invoicesUsed}</span>
+                                            </div>
+                                            <div className="flex justify-between pt-1 border-t border-border text-primary font-semibold">
+                                                <span>Remaining:</span>
+                                                <span>{remainingInvoicesForBusiness}</span>
+                                            </div>
+                                        </div>
+                                        <div className="space-y-1">
+                                            <div className="flex items-center gap-1 text-muted-foreground">
+                                                <Quote className="h-3.5 w-3.5" />
+                                                <span className="font-semibold">Quotations</span>
+                                            </div>
+                                            <div className="flex justify-between">
+                                                <span className="text-muted-foreground">Limit:</span>
+                                                <span className="font-medium">{sub.quotationLimit}</span>
+                                            </div>
+                                            <div className="flex justify-between">
+                                                <span className="text-muted-foreground">Used:</span>
+                                                <span className="font-medium">{sub.quotationsUsed}</span>
+                                            </div>
+                                            <div className="flex justify-between pt-1 border-t border-border text-primary font-semibold">
+                                                <span>Remaining:</span>
+                                                <span>{remainingQuotationsForBusiness}</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div className="text-[11px] text-muted-foreground flex items-center gap-1">
+                                        <Calendar className="h-3 w-3" />
+                                        <span>
+                                            Started on{" "}
+                                            {new Date(sub.startDate).toLocaleDateString()}
+                                        </span>
+                                    </div>
+                                </div>
+                            );
+                        })}
                     </div>
                 )}
             </div>

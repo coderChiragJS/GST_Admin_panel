@@ -92,6 +92,19 @@ export interface AdminUserSubscriptionSummary {
     isActive: boolean;
 }
 
+export interface AdminUserSubscriptionByBusiness {
+    subscriptionId: string;
+    packageId: string;
+    packageName: string;
+    businessId: string | null;
+    gstNumber: string | null;
+    invoiceLimit: number;
+    quotationLimit: number;
+    invoicesUsed: number;
+    quotationsUsed: number;
+    startDate: string;
+}
+
 export interface AdminUserWithSubscription {
     user: AdminUserSummary;
     businesses: AdminUserBusinessSummary[];
@@ -126,6 +139,7 @@ export interface AdminUser {
         quotationsUsed: number;
         startDate: string;
     } | null;
+    subscriptionsByBusiness?: AdminUserSubscriptionByBusiness[];
     hasPurchasedPackage: boolean;
     remainingInvoices: number;
     remainingQuotations: number;
