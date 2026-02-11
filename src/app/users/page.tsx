@@ -149,7 +149,7 @@ export default function UsersPage() {
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-border">
-                                    {users.map((user) => (
+                                    {users.map((user: AdminUser) => (
                                         <tr
                                             key={user.userId}
                                             className="transition-colors hover:bg-muted/50 cursor-pointer"
