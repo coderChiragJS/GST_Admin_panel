@@ -26,7 +26,7 @@ import { cn } from "@/lib/utils";
 export default function PendingApprovalsPage() {
     const dispatch = useDispatch<AppDispatch>();
     const { pendingApprovals, loading, error } = useSelector((state: RootState) => state.admin);
-        const [selectedItem, setSelectedItem] = useState<{ user: any; business: any } | null>(null);
+    const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
     const [trialDaysInput, setTrialDaysInput] = useState<string>("");
 
     useEffect(() => {
@@ -34,13 +34,40 @@ export default function PendingApprovalsPage() {
     }, [dispatch]);
 
     useEffect(() => {
-        if (selectedItem) setTrialDaysInput("");
-    }, [selectedItem]);
+        if (selectedUserId) setTrialDaysInput("");
+    }, [selectedUserId]);
+
+    // Group pending items by user
+    const groupedApprovals = pendingApprovals.reduce((acc: any, item: any) => {
+        const userId = item.user.userId;
+        if (!acc[userId]) {
+            acc[userId] = {
+                user: item.user,
+                businesses: []
+            };
+        }
+        acc[userId].businesses.push(item.business);
+        return acc;
+    }, {});
+
+    const uniqueUsers = Object.values(groupedApprovals) as { user: any; businesses: any[] }[];
+
+    // Derive the currently selected user from the latest data
+    const activeUser = selectedUserId ? uniqueUsers.find(u => u.user.userId === selectedUserId) : null;
+
+    // Auto-close modal if the selected user no longer exists in the pending list (e.g., all approved)
+    useEffect(() => {
+        if (selectedUserId && !activeUser) {
+            setSelectedUserId(null);
+        }
+    }, [selectedUserId, activeUser]);
 
     const handleApproveBusiness = async (e: React.MouseEvent, userId: string, businessId: string) => {
         e.stopPropagation();
         if (!userId || !businessId) return;
         await dispatch(approveBusiness({ userId, businessId }));
+        // No need to manually close; if it was the last business, activeUser becomes undefined and effect closes it.
+        // If other businesses remain, activeUser updates automatically.
     };
 
     const handleApproveUser = async (e: React.MouseEvent, userId: string) => {
@@ -85,15 +112,15 @@ export default function PendingApprovalsPage() {
             <header className="flex items-center justify-between">
                 <div>
                     <h1 className="text-3xl font-bold tracking-tight italic">Pending Approvals</h1>
-                    <p className="mt-1 text-muted-foreground italic">Review and manage new business registrations awaiting verification.</p>
+                    <p className="mt-1 text-muted-foreground italic">Review and manage new user registrations awaiting verification.</p>
                 </div>
                 <div className="flex h-10 items-center justify-center rounded-xl bg-amber-500/10 px-4 text-sm font-semibold text-amber-600 border border-amber-500/20 italic">
                     <Clock className="mr-2 h-4 w-4" />
-                    {pendingApprovals.length} Requests
+                    {uniqueUsers.length} Users Pending
                 </div>
             </header>
 
-            {pendingApprovals.length === 0 ? (
+            {uniqueUsers.length === 0 ? (
                 <div className="glass flex h-64 flex-col items-center justify-center rounded-3xl text-center">
                     <BadgeCheck className="mb-4 h-12 w-12 text-muted-foreground/40" />
                     <h3 className="text-lg font-semibold italic">All caught up!</h3>
@@ -101,61 +128,37 @@ export default function PendingApprovalsPage() {
                 </div>
             ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {pendingApprovals.map((item) => (
+                    {uniqueUsers.map((item) => (
                         <div
-                            key={item.business.businessId}
-                            onClick={() => setSelectedItem({ user: item.user, business: item.business })}
+                            key={item.user.userId}
+                            onClick={() => setSelectedUserId(item.user.userId)}
                             className="relative group rounded-3xl border border-border bg-card/40 glass p-6 transition-all hover:shadow-xl hover:translate-y-[-4px] cursor-pointer"
                         >
                             <div className="flex items-start justify-between mb-5">
                                 <div className="flex items-center gap-3">
                                     <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 text-primary group-hover:bg-primary group-hover:text-primary-foreground transition-colors">
-                                        <Building2 className="h-5 w-5" />
+                                        <User className="h-5 w-5" />
                                     </div>
                                     <div>
-                                        <h5 className="font-bold text-base italic line-clamp-1">{item.business.businessName ?? item.business.firmName ?? "—"}</h5>
-                                        <p className="text-xs text-muted-foreground font-mono uppercase italic tracking-wider">{item.business.gstNumber}</p>
+                                        <h5 className="font-bold text-base italic line-clamp-1">{item.user.name || "—"}</h5>
+                                        <p className="text-xs text-muted-foreground italic">{item.user.email}</p>
                                     </div>
                                 </div>
                                 <div className="flex flex-col items-end gap-2">
                                     <span className="inline-flex items-center rounded-full bg-amber-500/10 px-2.5 py-0.5 text-[10px] font-bold text-amber-500 uppercase italic border border-amber-500/20">
-                                        {item.business.approvalStatus}
+                                        {item.businesses.length} Pending
                                     </span>
                                 </div>
                             </div>
 
                             <div className="space-y-3 mb-6">
                                 <div className="flex items-center gap-2 text-sm italic font-medium text-muted-foreground">
-                                    <User className="h-3.5 w-3.5 text-primary" />
-                                    <span className="line-clamp-1">{item.user?.name || 'N/A'}</span>
-                                </div>
-                                <div className="grid grid-cols-1 gap-y-2 text-xs italic font-medium">
-                                    <div className="flex items-center gap-2 text-muted-foreground">
-                                        <Phone className="h-3.5 w-3.5 shrink-0 text-primary" />
-                                        <span>{item.business.mobile}</span>
-                                    </div>
-                                    <div className="flex items-center gap-2 text-muted-foreground">
-                                        <MapPin className="h-3.5 w-3.5 shrink-0 text-primary" />
-                                        <span className="line-clamp-1">{item.business.address.city}, {item.business.address.state}</span>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div className="pt-4 border-t border-border/50">
-                                <div className="flex flex-col gap-3">
-                                    <div className="flex items-center justify-between">
-                                        <div className="flex items-center gap-1 text-[10px] text-muted-foreground italic font-medium">
-                                            <Clock className="h-3 w-3" />
-                                            {new Date(item.business.createdAt).toLocaleDateString()}
-                                        </div>
-                                    </div>
-                                    <button
-                                        disabled={loading || !(item.user?.userId || item.business?.userId) || !item.business?.businessId}
-                                        onClick={(e) => handleApproveBusiness(e, item.user?.userId ?? item.business?.userId ?? "", item.business?.businessId ?? "")}
-                                        className="rounded-xl bg-primary px-4 py-2 text-xs font-bold text-primary-foreground shadow-lg shadow-primary/20 transition-all hover:scale-105 active:scale-95 disabled:opacity-50 italic flex items-center gap-2"
-                                    >
-                                        {loading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : "Approve"}
-                                    </button>
+                                    <Building2 className="h-3.5 w-3.5 text-primary" />
+                                    <span className="line-clamp-1">
+                                        {item.businesses.length === 1
+                                            ? item.businesses[0].firmName
+                                            : `${item.businesses.length} Businesses waiting`}
+                                    </span>
                                 </div>
                             </div>
 
@@ -170,27 +173,27 @@ export default function PendingApprovalsPage() {
             )}
 
             {/* Detail Modal */}
-            {selectedItem && (
+            {activeUser && (
                 <div
                     className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-background/80 backdrop-blur-sm animate-in fade-in duration-300"
-                    onClick={() => setSelectedItem(null)}
+                    onClick={() => setSelectedUserId(null)}
                 >
                     <div
-                        className="glass w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-[2rem] border border-border shadow-2xl animate-in zoom-in duration-300"
+                        className="glass w-full max-w-3xl max-h-[90vh] overflow-y-auto rounded-[2rem] border border-border shadow-2xl animate-in zoom-in duration-300"
                         onClick={(e) => e.stopPropagation()}
                     >
                         <div className="sticky top-0 z-10 bg-background/50 backdrop-blur-md px-8 py-6 border-b border-border flex items-center justify-between">
                             <div className="flex items-center gap-4">
                                 <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-primary text-primary-foreground">
-                                    <Building2 className="h-6 w-6" />
+                                    <User className="h-6 w-6" />
                                 </div>
                                 <div>
-                                    <h2 className="text-xl font-bold italic">{selectedItem.business.businessName ?? selectedItem.business.firmName ?? "—"}</h2>
-                                    <p className="text-sm text-muted-foreground italic font-medium font-mono tracking-tight">{selectedItem.business.gstNumber}</p>
+                                    <h2 className="text-xl font-bold italic">{activeUser.user.name || "—"}</h2>
+                                    <p className="text-sm text-muted-foreground italic font-medium">{activeUser.user.email}</p>
                                 </div>
                             </div>
                             <button
-                                onClick={() => setSelectedItem(null)}
+                                onClick={() => setSelectedUserId(null)}
                                 className="rounded-xl p-2 hover:bg-muted transition-colors"
                             >
                                 <X className="h-6 w-6" />
@@ -198,70 +201,15 @@ export default function PendingApprovalsPage() {
                         </div>
 
                         <div className="p-8 space-y-8">
-                            {/* User Section */}
+                            {/* User User Actions: Approve user (with trial days) */}
                             <section className="space-y-4">
-                                <h3 className="text-xs font-bold uppercase tracking-[0.2em] text-primary flex items-center gap-2 italic">
-                                    <User className="h-3 w-3" /> User Information
-                                </h3>
-                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                    <DetailItem label="Full Name" value={selectedItem.user.name} icon={User} />
-                                    <DetailItem label="Email Address" value={selectedItem.user.email} icon={Mail} />
-                                    <DetailItem label="User ID" value={selectedItem.user.userId} icon={Fingerprint} mono className="sm:col-span-2" />
-                                </div>
-                            </section>
-
-                            {/* Business Section */}
-                            <section className="space-y-4">
-                                <h3 className="text-xs font-bold uppercase tracking-[0.2em] text-primary flex items-center gap-2 italic">
-                                    <Building2 className="h-3 w-3" /> Business Information
-                                </h3>
-                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                    <DetailItem label="GST Number" value={selectedItem.business.gstNumber} icon={BadgeCheck} mono />
-                                    <DetailItem label="PAN Number" value={selectedItem.business.pan} icon={Fingerprint} mono />
-                                    <DetailItem label="Mobile" value={selectedItem.business.mobile} icon={Phone} />
-                                    <DetailItem label="Business Email" value={selectedItem.business.email} icon={Mail} />
-                                    <DetailItem label="Registered On" value={new Date(selectedItem.business.createdAt).toLocaleString()} icon={Calendar} />
-                                    <DetailItem label="Last Updated" value={new Date(selectedItem.business.updatedAt).toLocaleString()} icon={Clock} />
-                                    {selectedItem.business.companyLogoUrl && (
-                                        <DetailItem label="Logo URL" value={selectedItem.business.companyLogoUrl} icon={Info} className="sm:col-span-2" />
-                                    )}
-                                    <DetailItem label="Business ID" value={selectedItem.business.businessId} icon={Fingerprint} mono className="sm:col-span-2" />
-                                </div>
-                            </section>
-
-                            {/* Address Section */}
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-8 pb-4">
-                                <section className="space-y-4">
+                                <div className="flex items-center justify-between">
                                     <h3 className="text-xs font-bold uppercase tracking-[0.2em] text-primary flex items-center gap-2 italic">
-                                        <MapPin className="h-3 w-3" /> Registered Address
+                                        <UserCheck className="h-3 w-3" /> Approve User Access
                                     </h3>
-                                    <div className="rounded-2xl border border-border bg-muted/20 p-6 italic font-medium text-sm leading-relaxed">
-                                        <p>{selectedItem.business.address.street}</p>
-                                        <p>{selectedItem.business.address.city}, {selectedItem.business.address.state}</p>
-                                        <p className="text-primary font-bold mt-1">PIN: {selectedItem.business.address.pincode}</p>
-                                    </div>
-                                </section>
-
-                                {selectedItem.business.dispatchAddress && (
-                                    <section className="space-y-4">
-                                        <h3 className="text-xs font-bold uppercase tracking-[0.2em] text-primary flex items-center gap-2 italic">
-                                            <MapPin className="h-3 w-3" /> Dispatch Address
-                                        </h3>
-                                        <div className="rounded-2xl border border-border bg-muted/20 p-6 italic font-medium text-sm leading-relaxed">
-                                            <p>{selectedItem.business.dispatchAddress.street}</p>
-                                            <p>{selectedItem.business.dispatchAddress.city}, {selectedItem.business.dispatchAddress.state}</p>
-                                        </div>
-                                    </section>
-                                )}
-                            </div>
-
-                            {/* Actions: Approve user (with trial days) + Approve business */}
-                            <section className="space-y-4 pt-6 border-t border-border">
-                                <h3 className="text-xs font-bold uppercase tracking-[0.2em] text-primary flex items-center gap-2 italic">
-                                    Actions
-                                </h3>
-                                <div className="flex flex-col sm:flex-row gap-4 flex-wrap">
-                                    <div className="flex flex-col gap-2 sm:flex-row sm:items-end">
+                                </div>
+                                <div className="flex flex-col sm:flex-row gap-4 flex-wrap bg-muted/20 p-4 rounded-2xl border border-border/50">
+                                    <div className="flex flex-col gap-2 sm:flex-row sm:items-end flex-1">
                                         <div>
                                             <label className="block text-xs font-medium text-muted-foreground mb-1 italic">Trial days (optional)</label>
                                             <input
@@ -275,22 +223,50 @@ export default function PendingApprovalsPage() {
                                         </div>
                                         <button
                                             disabled={loading}
-                                            onClick={(e) => handleApproveUser(e, selectedItem.user?.userId ?? "")}
+                                            onClick={(e) => handleApproveUser(e, activeUser.user?.userId ?? "")}
                                             className="flex items-center gap-2 rounded-xl bg-primary/90 px-4 py-2 text-sm font-semibold text-primary-foreground hover:bg-primary disabled:opacity-50 italic"
                                         >
                                             {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <UserCheck className="h-4 w-4" />}
-                                            Approve user
+                                            Approve User Globally
                                         </button>
                                     </div>
-                                    <button
-                                        disabled={loading}
-                                        onClick={(e) => handleApproveBusiness(e, selectedItem.user?.userId ?? "", selectedItem.business?.businessId ?? "")}
-                                        className="flex items-center gap-2 rounded-xl border-2 border-primary bg-primary/10 px-4 py-2 text-sm font-semibold text-primary hover:bg-primary/20 disabled:opacity-50 italic"
-                                    >
-                                        {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Building className="h-4 w-4" />}
-                                        Approve business
-                                    </button>
                                 </div>
+                            </section>
+
+                            {/* Pending Businesses List */}
+                            <section className="space-y-6">
+                                <h3 className="text-xs font-bold uppercase tracking-[0.2em] text-primary flex items-center gap-2 italic">
+                                    <Building2 className="h-3 w-3" /> Pending Businesses ({activeUser.businesses.length})
+                                </h3>
+
+                                {activeUser.businesses.map((business, index) => (
+                                    <div key={business.businessId} className="rounded-3xl border border-border bg-card/40 glass p-6 space-y-6">
+                                        <div className="flex items-center justify-between">
+                                            <div>
+                                                <h4 className="text-lg font-bold italic">{business.businessName || business.firmName || "—"}</h4>
+                                                <div className="flex items-center gap-2 text-sm font-mono text-muted-foreground mt-1">
+                                                    <BadgeCheck className="h-4 w-4 text-primary" />
+                                                    {business.gstNumber}
+                                                </div>
+                                            </div>
+                                            <button
+                                                disabled={loading}
+                                                onClick={(e) => handleApproveBusiness(e, activeUser.user?.userId ?? "", business.businessId ?? "")}
+                                                className="flex items-center gap-2 rounded-xl border-2 border-primary bg-primary/10 px-4 py-2 text-xs font-bold text-primary hover:bg-primary/20 disabled:opacity-50 italic"
+                                            >
+                                                {loading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Building className="h-3.5 w-3.5" />}
+                                                Approve Business
+                                            </button>
+                                        </div>
+
+                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                            <DetailItem label="Address" value={`${business.address.street}, ${business.address.city}, ${business.address.state}`} icon={MapPin} />
+                                            <DetailItem label="Mobile" value={business.mobile} icon={Phone} />
+                                            <DetailItem label="Email" value={business.email} icon={Mail} />
+                                            <DetailItem label="PAN" value={business.pan} icon={Fingerprint} mono />
+                                        </div>
+                                    </div>
+                                ))}
                             </section>
                         </div>
                     </div>

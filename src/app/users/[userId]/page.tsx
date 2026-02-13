@@ -82,13 +82,10 @@ export default function UserDetailPage() {
     const {
         name,
         email,
-        createdAt,
+
         approvalStatus,
-        role,
         subscriptionActive,
         hasPurchasedPackage,
-        trialStartDate,
-        trialEndDate,
         businesses,
         subscription,
         remainingInvoices,
@@ -145,49 +142,9 @@ export default function UserDetailPage() {
                     Profile Information
                 </h2>
                 <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-                    <div className="space-y-1">
-                        <div className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                            User ID
-                        </div>
-                        <div className="font-mono text-sm break-all">{userId}</div>
-                    </div>
-                    <div className="space-y-1">
-                        <div className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                            Role
-                        </div>
-                        <div className="text-sm font-medium">{role}</div>
-                    </div>
-                    <div className="space-y-1">
-                        <div className="text-xs font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-1">
-                            <Calendar className="h-3.5 w-3.5" />
-                            Created
-                        </div>
-                        <div className="text-sm">{new Date(createdAt).toLocaleString()}</div>
-                    </div>
-                    <div className="space-y-1">
-                        <div className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                            Trial Start
-                        </div>
-                        <div className="text-sm">{new Date(trialStartDate).toLocaleDateString()}</div>
-                    </div>
-                    <div className="space-y-1">
-                        <div className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                            Trial End
-                        </div>
-                        <div className="text-sm">{new Date(trialEndDate).toLocaleDateString()}</div>
-                    </div>
-                    <div className="space-y-1">
-                        <div className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                            Trial Status
-                        </div>
-                        <div className="text-sm">
-                            {new Date(trialEndDate) > new Date() ? (
-                                <span className="text-emerald-600 font-medium">Active</span>
-                            ) : (
-                                <span className="text-destructive font-medium">Expired</span>
-                            )}
-                        </div>
-                    </div>
+
+
+
                 </div>
             </div>
 
@@ -219,11 +176,11 @@ export default function UserDetailPage() {
                                         className={cn(
                                             "inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium",
                                             b.approvalStatus === "APPROVED" &&
-                                                "bg-emerald-500/10 text-emerald-600",
+                                            "bg-emerald-500/10 text-emerald-600",
                                             b.approvalStatus === "PENDING" &&
-                                                "bg-amber-500/10 text-amber-600",
+                                            "bg-amber-500/10 text-amber-600",
                                             b.approvalStatus === "REJECTED" &&
-                                                "bg-rose-500/10 text-rose-600"
+                                            "bg-rose-500/10 text-rose-600"
                                         )}
                                     >
                                         {b.approvalStatus}
@@ -263,20 +220,7 @@ export default function UserDetailPage() {
                                 </div>
                                 <div className="text-base font-semibold">{subscription.packageName}</div>
                             </div>
-                            <div className="space-y-1">
-                                <div className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                                    Package ID
-                                </div>
-                                <div className="font-mono text-xs break-all">{subscription.packageId}</div>
-                            </div>
-                            <div className="space-y-1">
-                                <div className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                                    Subscription ID
-                                </div>
-                                <div className="font-mono text-xs break-all">
-                                    {subscription.subscriptionId}
-                                </div>
-                            </div>
+
                             <div className="space-y-1">
                                 <div className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                                     Start Date
@@ -360,10 +304,10 @@ export default function UserDetailPage() {
                             const businessLabel = business
                                 ? `${business.firmName || "—"}${business.gstNumber ? ` (${business.gstNumber})` : ""}`
                                 : sub.gstNumber
-                                ? `GST: ${sub.gstNumber}`
-                                : sub.businessId
-                                ? `Business ID: ${sub.businessId}`
-                                : "Unknown business";
+                                    ? `GST: ${sub.gstNumber}`
+                                    : sub.businessId
+                                        ? `Business ID: ${sub.businessId}`
+                                        : "Unknown business";
 
                             const remainingInvoicesForBusiness = Math.max(
                                 (sub.invoiceLimit ?? 0) - (sub.invoicesUsed ?? 0),

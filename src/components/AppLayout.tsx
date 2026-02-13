@@ -5,7 +5,7 @@ import { Sidebar } from "@/components/Sidebar";
 import { useSelector } from "react-redux";
 import { RootState } from "@/store/store";
 import { useEffect, useState } from "react";
-
+// test÷?÷
 export function AppLayout({ children }: { children: React.ReactNode }) {
     const pathname = usePathname();
     const router = useRouter();
@@ -40,7 +40,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
     if (isPublicPage) {
         return <div className="min-h-screen bg-background">{children}</div>;
     }
-
+    // test te fuekd
     return (
         <>
             <Sidebar />
